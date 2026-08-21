@@ -1,0 +1,5 @@
+# Canonical contract digests. Update only after the corresponding reviewed WIT changes.
+sha256  a1fc237f947082ee3da74e5f65dd3a4f1301185693cf6e4dbe5b52bee11c8bc7  wit/sigil-host/1.0.0/host.wit
+blake3  bea246ac1680a462633467793437d85c136a318e37eaca138969d478c7299b9f  wit/sigil-host/1.0.0/host.wit
+sha256  1eed081d79af7aca61c343667b1a1d763b8be70f912d0c67f4b48d3ef0fee8f2  wit/sigil-sql/0.1.0/sql.wit
+blake3  62cb190b6bcf7bf9fb45a974cb4865ec462c96520b4b88eef951c6b96774d068  wit/sigil-sql/0.1.0/sql.wit

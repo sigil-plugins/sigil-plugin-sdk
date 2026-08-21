@@ -1,0 +1,42 @@
+{
+  "interface": "sigil:sql/driver@0.1.0",
+  "limits": {
+    "sql_bytes": 1048575,
+    "packet_bytes": 1048576,
+    "field_bytes": 1048576,
+    "row_bytes": 1048576,
+    "metadata_bytes": 1048576,
+    "columns": 1024,
+    "rows": 10000,
+    "cells": 100000,
+    "packets": 100000,
+    "aggregate_cell_bytes": 8388608
+  },
+  "error_classes": [
+    "authentication",
+    "server",
+    "transport",
+    "protocol",
+    "encoding",
+    "limit",
+    "timeout",
+    "closed",
+    "unsupported"
+  ],
+  "cells": [
+    { "kind": "null" },
+    { "kind": "text", "value": "snowman ☃" },
+    { "kind": "bytes", "value": [0, 255, 128] }
+  ],
+  "host_mapping": {
+    "unavailable": "transport",
+    "io": "transport",
+    "timeout": "timeout",
+    "limit": "limit",
+    "denied": "outer-review",
+    "tls": "outer-review",
+    "configuration": "outer-review",
+    "internal": "outer-review",
+    "epoch": "outer-review-no-result"
+  }
+}

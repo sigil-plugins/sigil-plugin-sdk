@@ -56,7 +56,7 @@ interface net {
         write-all: func(data: list<u8>) -> result<_, error>;
         flush: func() -> result<_, error>;
         upgrade-tls: func() -> result<_, error>;
-        close: func() -> result<_, error>;
+        close: func();
     }
 
     connect: func(endpoint: string) -> result<%stream, error>;
