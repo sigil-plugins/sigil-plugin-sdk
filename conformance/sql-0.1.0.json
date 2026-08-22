@@ -10,8 +10,25 @@
     "rows": 10000,
     "cells": 100000,
     "packets": 100000,
-    "aggregate_cell_bytes": 8388608
+    "aggregate_cell_bytes": 8388608,
+    "label_raw_bytes": 1024,
+    "label_scalars": 256,
+    "error_raw_bytes": 4096,
+    "error_scalars": 1024,
+    "sanitized_error_bytes": 8192
   },
+  "boundary_vectors": [
+    { "quantity": "sql_bytes", "zero": "ok", "maximum": "ok", "maximum_plus_one": "limit", "overflow": "limit" },
+    { "quantity": "packet_bytes", "zero": "ok", "maximum": "ok", "maximum_plus_one": "limit", "overflow": "limit" },
+    { "quantity": "field_bytes", "zero": "ok", "maximum": "ok", "maximum_plus_one": "limit", "overflow": "limit" },
+    { "quantity": "row_bytes", "zero": "ok", "maximum": "ok", "maximum_plus_one": "limit", "overflow": "limit" },
+    { "quantity": "metadata_bytes", "zero": "ok", "maximum": "ok", "maximum_plus_one": "limit", "overflow": "limit" },
+    { "quantity": "columns", "zero": "limit", "maximum": "ok", "maximum_plus_one": "limit", "overflow": "limit" },
+    { "quantity": "rows", "zero": "ok", "maximum": "ok", "maximum_plus_one": "limit", "overflow": "limit" },
+    { "quantity": "cells", "zero": "ok", "maximum": "ok", "maximum_plus_one": "limit", "overflow": "limit" },
+    { "quantity": "packets", "zero": "ok", "maximum": "ok", "maximum_plus_one": "limit", "overflow": "limit" },
+    { "quantity": "aggregate_cell_bytes", "zero": "ok", "maximum": "ok", "maximum_plus_one": "limit", "overflow": "limit" }
+  ],
   "error_classes": [
     "authentication",
     "server",
@@ -28,15 +45,40 @@
     { "kind": "text", "value": "snowman ☃" },
     { "kind": "bytes", "value": [0, 255, 128] }
   ],
+  "cell_mapping": {
+    "binary_collation": "bytes-lossless",
+    "unsupported_well_formed_collation": "bytes-lossless",
+    "supported_text_valid_utf8": "text-lossless",
+    "supported_text_invalid_utf8": "encoding"
+  },
+  "string_contract": {
+    "sqlstate": "exactly-five-uppercase-ascii-alphanumeric",
+    "forbidden_scalars": ["U+0000-U+001F", "U+007F-U+009F", "U+2028-U+2029", "U+202A-U+202E", "U+2066-U+2069"],
+    "secret_replacement": "single-left-to-right-longest-then-secret-name",
+    "replacement_token": "[REDACTED]",
+    "controls": "uppercase-hex-u-brace-minimum-four-digits",
+    "truncate": false
+  },
   "host_mapping": {
     "unavailable": "transport",
     "io": "transport",
     "timeout": "timeout",
-    "limit": "limit",
+    "limit": "limit-no-partial-result",
     "denied": "outer-review",
     "tls": "outer-review",
     "configuration": "outer-review",
+    "resolver": "outer-review",
     "internal": "outer-review",
-    "epoch": "outer-review-no-result"
+    "epoch": "outer-review-no-result",
+    "trap": "outer-review-no-result",
+    "allocation": "outer-review-no-result"
+  },
+  "lifecycle": {
+    "close": "idempotent",
+    "query_after_close": "closed",
+    "retry": false,
+    "reconnect": false,
+    "multi_result": "unsupported",
+    "local_infile": "unsupported"
   }
 }

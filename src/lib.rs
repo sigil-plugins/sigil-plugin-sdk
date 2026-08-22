@@ -100,6 +100,66 @@ pub mod sql {
         fn query(&mut self, sql: &str) -> Result<QueryResult, Error>;
         fn close(&mut self);
     }
+
+    /// Checked inclusive accumulation used by every published SQL limit.
+    pub fn checked_accumulate(
+        current: usize,
+        increment: usize,
+        maximum: usize,
+    ) -> Result<usize, ErrorClass> {
+        current
+            .checked_add(increment)
+            .filter(|value| *value <= maximum)
+            .ok_or(ErrorClass::Limit)
+    }
+
+    /// Host-independent deterministic mock for binding and lifecycle tests.
+    #[derive(Clone, Debug)]
+    pub struct MockDriver {
+        result: QueryResult,
+    }
+
+    impl MockDriver {
+        #[must_use]
+        pub const fn new(result: QueryResult) -> Self {
+            Self { result }
+        }
+    }
+
+    #[derive(Clone, Debug)]
+    pub struct MockConnection {
+        result: QueryResult,
+        closed: bool,
+    }
+
+    impl Driver for MockDriver {
+        type Connection = MockConnection;
+
+        fn connect(&self, _options: ConnectOptions) -> Result<Self::Connection, Error> {
+            Ok(MockConnection {
+                result: self.result.clone(),
+                closed: false,
+            })
+        }
+    }
+
+    impl Connection for MockConnection {
+        fn query(&mut self, _sql: &str) -> Result<QueryResult, Error> {
+            if self.closed {
+                return Err(Error {
+                    class: ErrorClass::Closed,
+                    vendor_code: None,
+                    sqlstate: None,
+                    message: "connection is closed".to_owned(),
+                });
+            }
+            Ok(self.result.clone())
+        }
+
+        fn close(&mut self) {
+            self.closed = true;
+        }
+    }
 }
 
 /// A deterministic, authority-free host model for unit tests.
@@ -142,7 +202,10 @@ pub mod test_host {
 
 #[cfg(test)]
 mod tests {
-    use super::sql::{Cell, ErrorClass};
+    use super::sql::{
+        Cell, ConnectOptions, Connection as _, Driver as _, ErrorClass, MockDriver, QueryResult,
+        checked_accumulate,
+    };
     use super::test_host::{LogLevel, TestHost};
 
     #[test]
@@ -171,6 +234,22 @@ mod tests {
         assert_eq!(value["interface"], "sigil:sql/driver@0.1.0");
         assert_eq!(value["limits"]["sql_bytes"], 1_048_575);
         assert_eq!(value["limits"]["packet_bytes"], 1_048_576);
+        assert_eq!(value["limits"]["aggregate_cell_bytes"], 8_388_608);
+        assert_eq!(value["limits"]["label_raw_bytes"], 1_024);
+        assert_eq!(value["limits"]["sanitized_error_bytes"], 8_192);
+        assert_eq!(value["host_mapping"]["denied"], "outer-review");
+        assert_eq!(value["host_mapping"]["limit"], "limit-no-partial-result");
+        assert_eq!(value["lifecycle"]["retry"], false);
+        assert_eq!(value["lifecycle"]["close"], "idempotent");
+        let vectors = value["boundary_vectors"]
+            .as_array()
+            .expect("boundary vector array");
+        assert_eq!(vectors.len(), 10);
+        assert!(vectors.iter().all(|vector| {
+            vector["maximum"] == "ok"
+                && vector["maximum_plus_one"] == "limit"
+                && vector["overflow"] == "limit"
+        }));
         assert_eq!(
             serde_json::to_value(ErrorClass::Authentication).expect("serialize"),
             "authentication"
@@ -178,6 +257,45 @@ mod tests {
         assert_eq!(
             serde_json::to_value(Cell::Bytes(vec![0, 255])).expect("serialize"),
             serde_json::json!({"kind": "bytes", "value": [0, 255]})
+        );
+    }
+
+    #[test]
+    fn every_reference_limit_is_checked_and_mock_lifecycle_is_closed() {
+        for maximum in [1_024, 10_000, 100_000, 1_048_575, 1_048_576, 8_388_608] {
+            assert_eq!(checked_accumulate(0, 0, maximum), Ok(0));
+            assert_eq!(checked_accumulate(0, maximum, maximum), Ok(maximum));
+            assert_eq!(
+                checked_accumulate(maximum, 1, maximum),
+                Err(ErrorClass::Limit)
+            );
+            assert_eq!(
+                checked_accumulate(usize::MAX, 1, maximum),
+                Err(ErrorClass::Limit)
+            );
+        }
+
+        let driver = MockDriver::new(QueryResult::Command { affected_rows: 7 });
+        let mut connection = driver
+            .connect(ConnectOptions {
+                endpoint: "database".to_owned(),
+                username_secret: "MYSQL_USER".to_owned(),
+                password_secret: "MYSQL_PASSWORD".to_owned(),
+                database: Some("app".to_owned()),
+            })
+            .expect("mock connect");
+        assert_eq!(
+            connection.query("update t set x = 1"),
+            Ok(QueryResult::Command { affected_rows: 7 })
+        );
+        connection.close();
+        connection.close();
+        assert_eq!(
+            connection
+                .query("select 1")
+                .expect_err("closed query")
+                .class,
+            ErrorClass::Closed
         );
     }
 }
