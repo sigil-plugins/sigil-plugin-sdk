@@ -38,6 +38,8 @@ pub mod sql_v02_bindings {
     });
 }
 
+pub mod sql_v02;
+
 /// Language-neutral reference model for `sigil:sql/driver@0.1.0`.
 pub mod sql {
     use serde::{Deserialize, Serialize};
@@ -291,6 +293,83 @@ mod tests {
         assert_eq!(command.affected_rows, u64::MAX);
         assert_eq!(command.last_insert_id, Some(0));
         assert_eq!(command.warnings, 2);
+    }
+
+    #[test]
+    fn sql_v02_language_neutral_vectors_and_sigils_scenario_are_checked() {
+        let corpus: serde_json::Value =
+            serde_json::from_str(include_str!("../conformance/sql-0.2.0.json"))
+                .expect("checked SQL 0.2 conformance JSON");
+        assert_eq!(corpus["interface"], "sigil:sql/driver@0.2.0");
+        assert_eq!(corpus["previous_interface"], "sigil:sql/driver@0.1.0");
+        assert_eq!(corpus["nominally_compatible"], false);
+        assert_eq!(
+            corpus["value_tags"].as_array().expect("value tags").len(),
+            8
+        );
+        assert_eq!(
+            corpus["temporal_vectors"]
+                .as_array()
+                .expect("temporal vectors")
+                .len(),
+            9
+        );
+        assert_eq!(
+            corpus["error_vectors"]
+                .as_array()
+                .expect("error vectors")
+                .len(),
+            10
+        );
+        assert!(
+            corpus["invalid_vectors"]
+                .as_array()
+                .expect("invalid vectors")
+                .iter()
+                .filter(|vector| vector["expected"] == "limit")
+                .all(|vector| vector["partial_result"] == false)
+        );
+        assert!(
+            corpus["invalid_vectors"]
+                .as_array()
+                .expect("invalid vectors")
+                .iter()
+                .all(|vector| vector["layer"].is_string()
+                    && vector["representable_as_sql_error"].is_boolean()
+                    && vector["executable"].is_string())
+        );
+        assert_eq!(
+            corpus["command_vectors"][1]["affected_rows_decimal"],
+            u64::MAX.to_string()
+        );
+        assert_eq!(
+            corpus["compatibility"][0]["entrypoint"],
+            "sigil:sql/driver@0.1.0"
+        );
+        assert_eq!(
+            corpus["compatibility"][1]["entrypoint"],
+            "sigil:sql/driver@0.2.0"
+        );
+
+        let lua = mlua::Lua::new();
+        let scenario: mlua::Table = lua
+            .load(include_str!("../conformance/sql-compatibility.sigil.lua"))
+            .set_name("sql-compatibility.sigil.lua")
+            .eval()
+            .expect("Sigil compatibility scenario compiles and returns metadata");
+        assert!(scenario.get::<mlua::Function>("run").is_ok());
+        assert_eq!(scenario.get::<String>("priority").expect("priority"), "P0");
+        let stub: mlua::Table = lua
+            .load(include_str!("../conformance/sql-0.2.0.stub.lua"))
+            .set_name("sql-0.2.0.stub.lua")
+            .eval()
+            .expect("LuaLS stub golden executes as Lua");
+        assert!(stub.get::<mlua::Function>("connect").is_ok());
+        let stub_source = include_str!("../conformance/sql-0.2.0.stub.lua");
+        assert!(stub_source.contains("Wasm_sql_2Dv02_connection"));
+        assert!(stub_source.contains("---@field [\"exec\"] fun(self:"));
+        assert!(stub_source.contains("[\"max-result-bytes\"]: integer|nil"));
+        assert!(!stub_source.contains("query-result"));
     }
 
     #[test]

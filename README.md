@@ -24,11 +24,26 @@ authority.
 - `wit/sigil-sql/0.2.0/` is the nominally distinct typed SQL 0.2 contract.
 - SQL consumers pin an immutable SDK revision and must not maintain divergent copies.
 - `src/` provides reference Rust models and a deterministic authority-free test host.
-- `conformance/` contains language-neutral boundary and error-mapping vectors.
+- `conformance/` contains language-neutral boundary and error-mapping vectors,
+  a real Sigil scenario over both fixture components, and the exact SQL 0.2
+  LuaLS stub golden. [`docs/sql-conformance-boundaries.md`](docs/sql-conformance-boundaries.md)
+  records which malformed values can exist at each boundary.
+- [`docs/sql-compatibility.md`](docs/sql-compatibility.md) records the nominal
+  0.1/0.2 migration matrix and the checks that prevent interface substitution.
 
 Run `just check` without a Sigil checkout. Host maintainers additionally run
 `just drift /path/to/sigil` before publishing a host API change. The SDK is not
 a plugin and deliberately does not carry the `sigil-plugin` GitHub topic.
+
+Run `just sigil-check /path/to/sigil-binary` to validate, inspect, pack, and
+seed both authority-free fixture packages as isolated third-party digest-only
+acquisitions. The check uses the exact Sigil checkout beside the binary (or
+the checkout named by `SIGIL_CHECKOUT`), then runs the production CLI through
+independent install-store identities, project lock, managed stub generation, and
+`require("wasm.sql-v01")` plus `require("wasm.sql-v02")`. The scenario invokes
+both real components through Sigil's Lua bridge and checks lifted resources,
+NULL, bytes, typed integers, command metadata, errors, and bounds. The fixtures
+remain unpublished and `local:path` never enters the project lock.
 
 ## Release synchronization
 

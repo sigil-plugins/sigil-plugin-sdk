@@ -1,0 +1,148 @@
+{
+  "interface": "sigil:sql/driver@0.2.0",
+  "previous_interface": "sigil:sql/driver@0.1.0",
+  "nominally_compatible": false,
+  "value_tags": [
+    "null",
+    "signed",
+    "unsigned",
+    "floating",
+    "decimal",
+    "text",
+    "bytes",
+    "temporal"
+  ],
+  "value_vectors": [
+    { "id": "null", "column_type": "text", "cell": { "tag": "null" }, "logical_bytes": 0 },
+    { "id": "signed-min", "column_type": "signed", "cell": { "tag": "signed", "decimal": "-9223372036854775808", "wit_kind": "s64" }, "logical_bytes": 8 },
+    { "id": "signed-max", "column_type": "signed", "cell": { "tag": "signed", "decimal": "9223372036854775807", "wit_kind": "s64" }, "logical_bytes": 8 },
+    { "id": "unsigned-lua-max", "column_type": "unsigned", "cell": { "tag": "unsigned", "decimal": "9223372036854775807", "lua_kind": "integer" }, "logical_bytes": 8 },
+    { "id": "unsigned-wit-max", "column_type": "unsigned", "cell": { "tag": "unsigned", "decimal": "18446744073709551615", "lua_kind": "sigil.u64" }, "logical_bytes": 8 },
+    { "id": "floating-negative-zero", "column_type": "floating", "cell": { "tag": "floating", "exact_bits": "8000000000000000" }, "logical_bytes": 8 },
+    { "id": "decimal-leading-zeroes", "column_type": "decimal", "cell": { "tag": "decimal", "value": "001.2300" }, "logical_bytes": 8 },
+    { "id": "decimal-exponent", "column_type": "decimal", "cell": { "tag": "decimal", "value": "-0.10E+09" }, "logical_bytes": 9 },
+    { "id": "text-utf8", "column_type": "text", "cell": { "tag": "text", "value": "snowman ☃" }, "logical_bytes": 11 },
+    { "id": "bytes-lossless", "column_type": "bytes", "cell": { "tag": "bytes", "value": [0, 255, 128] }, "logical_bytes": 3 }
+  ],
+  "temporal_vectors": [
+    { "type": "date", "lexeme": "2026-08-30" },
+    { "type": "time", "lexeme": "-838:59:59.000001" },
+    { "type": "time-with-time-zone", "lexeme": "04:05:06.000007-03:30" },
+    { "type": "datetime", "lexeme": "2026-08-30 12:34:56.000001" },
+    { "type": "timestamp", "lexeme": "2026-08-30 12:34:56.000001" },
+    { "type": "timestamp-with-time-zone", "lexeme": "2026-08-30 12:34:56.000001+05:45" },
+    { "type": "interval", "lexeme": "P1Y2M3DT4H5M6.000007S" },
+    { "type": "year", "lexeme": "0000" },
+    { "type": "vendor", "lexeme": "epoch-seconds:1788086096" }
+  ],
+  "command_vectors": [
+    { "affected_rows": 0, "last_insert_id": null, "warnings": 0, "logical_bytes": 12 },
+    { "affected_rows_decimal": "18446744073709551615", "affected_rows_lua_kind": "sigil.u64", "last_insert_id": 0, "warnings": 4294967295, "logical_bytes": 20 }
+  ],
+  "error_vectors": [
+    { "class": "invalid", "terminal": false },
+    { "class": "authentication", "terminal": false },
+    { "class": "server", "vendor_code": 1201, "sqlstate": "HY000", "terminal": false },
+    { "class": "transport", "terminal": true },
+    { "class": "protocol", "terminal": true },
+    { "class": "encoding", "terminal": true },
+    { "class": "limit", "terminal": true, "partial_result": false },
+    { "class": "timeout", "terminal": true },
+    { "class": "closed", "terminal": true },
+    { "class": "unsupported", "terminal": false }
+  ],
+  "invalid_vectors": [
+    {
+      "id": "unknown-cell-discriminant",
+      "layer": "canonical-abi",
+      "representable_as_sql_error": false,
+      "expected": "component-rejection",
+      "executable": "sigil:malformed_value_exports_fail_deterministically"
+    },
+    {
+      "id": "invalid-utf8-string",
+      "layer": "canonical-abi",
+      "representable_as_sql_error": false,
+      "expected": "component-rejection",
+      "executable": "sigil:malformed_canonical_strings_fail_in_wasmtime_before_lossy_conversion"
+    },
+    {
+      "id": "row-width-mismatch",
+      "layer": "driver-validation",
+      "representable_as_sql_error": true,
+      "expected": "protocol",
+      "executable": "sdk:invalid_driver_vectors_execute_against_reference_validation"
+    },
+    {
+      "id": "temporal-metadata-missing",
+      "layer": "driver-validation",
+      "representable_as_sql_error": true,
+      "expected": "protocol",
+      "executable": "sdk:invalid_driver_vectors_execute_against_reference_validation"
+    },
+    {
+      "id": "temporal-metadata-on-nontemporal",
+      "layer": "driver-validation",
+      "representable_as_sql_error": true,
+      "expected": "protocol",
+      "executable": "sdk:invalid_driver_vectors_execute_against_reference_validation"
+    },
+    {
+      "id": "max-rows-plus-one",
+      "layer": "driver-and-component-host",
+      "representable_as_sql_error": true,
+      "expected": "limit",
+      "partial_result": false,
+      "executable": "sigil-scenario-and-host:element_depth_and_allocation_limits_accept_exact_boundary_then_fail_plus_one"
+    },
+    {
+      "id": "max-result-bytes-plus-one",
+      "layer": "driver-and-component-host",
+      "representable_as_sql_error": true,
+      "expected": "limit",
+      "partial_result": false,
+      "executable": "sigil-scenario-and-host:element_depth_and_allocation_limits_accept_exact_boundary_then_fail_plus_one"
+    },
+    {
+      "id": "logical-byte-overflow",
+      "layer": "reference-accounting",
+      "representable_as_sql_error": true,
+      "expected": "limit",
+      "partial_result": false,
+      "executable": "sdk:invalid_driver_vectors_execute_against_reference_validation"
+    }
+  ],
+  "limit_vectors": [
+    { "id": "caller-zero-rows", "driver": 10000, "operator": 5000, "caller": 0, "effective": 0 },
+    { "id": "caller-lowers-rows", "driver": 10000, "operator": 5000, "caller": 3, "effective": 3 },
+    { "id": "caller-cannot-widen-rows", "driver": 10000, "operator": 5000, "caller": 4294967295, "effective": 5000 },
+    { "id": "caller-zero-bytes", "driver": 8388608, "operator": 4194304, "caller": 0, "effective": 0 },
+    { "id": "caller-cannot-widen-bytes", "driver": 8388608, "operator": 4194304, "caller": 18446744073709551615, "effective": 4194304 }
+  ],
+  "session_script": [
+    { "call": "exec", "sql": "CREATE TEMPORARY TABLE conformance(value BIGINT)", "outcome": "command" },
+    { "call": "exec", "sql": "INSERT INTO conformance VALUES (7)", "outcome": "command" },
+    { "call": "query", "sql": "SELECT value FROM conformance", "outcome": "rows" },
+    { "call": "close", "outcome": "ok" },
+    { "call": "close", "outcome": "ok" },
+    { "call": "query", "sql": "SELECT value FROM conformance", "outcome": "closed" }
+  ],
+  "lifecycle": {
+    "connections": 1,
+    "retries": 0,
+    "reconnects": 0,
+    "replays": 0,
+    "close": "idempotent",
+    "drop": "closes-once",
+    "query_command_response": "unsupported-no-empty-rowset",
+    "exec_row_response": "unsupported-no-discarded-success"
+  },
+  "compatibility": [
+    { "version": "0.1.0", "entrypoint": "sigil:sql/driver@0.1.0", "typed_cells": false, "exec": false },
+    { "version": "0.2.0", "entrypoint": "sigil:sql/driver@0.2.0", "typed_cells": true, "exec": true }
+  ],
+  "goldens": {
+    "sigil_scenario": "conformance/sql-compatibility.sigil.lua",
+    "lua_stub": "conformance/sql-0.2.0.stub.lua"
+  }
+}

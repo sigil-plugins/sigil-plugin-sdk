@@ -1,0 +1,14 @@
+[package]
+name = "sigil-sql-v01-conformance-component"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wit-bindgen = { version = "=0.57.1", default-features = false, features = ["macros", "realloc"] }
+
+[lints.rust]
+unsafe_code = "deny"

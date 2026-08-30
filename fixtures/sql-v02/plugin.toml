@@ -1,0 +1,16 @@
+schema_version = 1
+name = "sql-v02"
+version = "0.0.1"
+description = "authority-free experimental SQL 0.2 conformance fixture"
+license = "MIT"
+
+[component]
+file = "plugin.wasm"
+entrypoint = "sigil:sql/driver@0.2.0"
+
+[requires]
+sigil = ">=0.33.0, <1.0.0"
+host_api = "^1.0"
+
+[repository]
+source = "github:conformance/sql-fixtures"

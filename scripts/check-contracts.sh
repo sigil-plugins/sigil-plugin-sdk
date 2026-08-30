@@ -13,6 +13,7 @@ test "$(b3sum wit/sigil-sql/0.1.0/sql.wit | awk '{print $1}')" = "$SQL_V01_BLAKE
 
 sha256sum --check <(awk '$1 == "sha256" { print $2 "  " $3 }' WIT-DIGESTS)
 b3sum --check <(awk '$1 == "blake3" { print $2 "  " $3 }' WIT-DIGESTS)
+./scripts/check-sql-fixtures.sh
 cargo fmt --all -- --check
-cargo test --locked
-cargo clippy --all-targets --locked -- -D warnings
+cargo test --workspace --locked
+cargo clippy --workspace --all-targets --locked -- -D warnings
