@@ -3,3 +3,5 @@ sha256  b27f414055663431da13798fd64b683d16562b11784bb7444288d27d99a1588b  wit/si
 blake3  abad1012a31e87f2005eeb97690e3b5cfa183341330317089a33dca92c7ebce9  wit/sigil-host/1.0.0/host.wit
 sha256  1eed081d79af7aca61c343667b1a1d763b8be70f912d0c67f4b48d3ef0fee8f2  wit/sigil-sql/0.1.0/sql.wit
 blake3  62cb190b6bcf7bf9fb45a974cb4865ec462c96520b4b88eef951c6b96774d068  wit/sigil-sql/0.1.0/sql.wit
+sha256  2c30024a4df3e54fc7c6ccc5e27ea42bb05c7c63993262b652f940d54d8bfee1  wit/sigil-sql/0.2.0/sql.wit
+blake3  ab5b655758e21c8c482a1b0bf838ca3b5a2a448abdf869614f7fa7a39a32a834  wit/sigil-sql/0.2.0/sql.wit

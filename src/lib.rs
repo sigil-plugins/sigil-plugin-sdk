@@ -14,6 +14,19 @@ pub mod host {
     });
 }
 
+/// Generated guest bindings for `sigil:sql/driver@0.2.0`.
+///
+/// This module is a compile-time proof that the canonical WIT generates Rust
+/// bindings. The WIT package remains authoritative.
+#[allow(unsafe_code, clippy::all, clippy::nursery, clippy::pedantic)]
+pub mod sql_v02_bindings {
+    wit_bindgen::generate!({
+        path: "wit/sigil-sql/0.2.0",
+        world: "bindings",
+        generate_all,
+    });
+}
+
 /// Language-neutral reference model for `sigil:sql/driver@0.1.0`.
 pub mod sql {
     use serde::{Deserialize, Serialize};
@@ -208,6 +221,66 @@ mod tests {
         checked_accumulate,
     };
     use super::test_host::{LogLevel, TestHost};
+
+    #[test]
+    fn generated_sql_v02_bindings_expose_typed_query_and_command_shapes() {
+        use super::sql_v02_bindings::exports::sigil::sql::driver::{
+            Cell as BoundCell, Column as BoundColumn, ColumnType, CommandResult,
+            ConnectOptions as BoundConnectOptions, TemporalType,
+        };
+
+        let options = BoundConnectOptions {
+            endpoint: "database".to_owned(),
+            username_secret: "SQL_USER".to_owned(),
+            password_secret: "SQL_PASSWORD".to_owned(),
+            database: Some("app".to_owned()),
+            max_rows: Some(3),
+            max_result_bytes: Some(4_096),
+        };
+        assert_eq!(options.max_rows, Some(3));
+        assert_eq!(options.max_result_bytes, Some(4_096));
+
+        let column = BoundColumn {
+            catalog: String::new(),
+            schema: String::new(),
+            table: "events".to_owned(),
+            original_table: "events".to_owned(),
+            name: "created_at".to_owned(),
+            original_name: "created_at".to_owned(),
+            vendor_type: 7,
+            charset: 45,
+            collation: 45,
+            flags: 0,
+            type_: ColumnType::Temporal,
+            temporal_type: Some(TemporalType::Timestamp),
+        };
+        assert!(matches!(column.type_, ColumnType::Temporal));
+        assert!(matches!(
+            column.temporal_type,
+            Some(TemporalType::Timestamp)
+        ));
+
+        let cells = [
+            BoundCell::Null,
+            BoundCell::Signed(-1),
+            BoundCell::Unsigned(u64::MAX),
+            BoundCell::Floating(-0.0),
+            BoundCell::Decimal("001.2300".to_owned()),
+            BoundCell::Text("snowman ☃".to_owned()),
+            BoundCell::Bytes(vec![0, 255]),
+            BoundCell::Temporal("2026-08-30 12:34:56.000001".to_owned()),
+        ];
+        assert_eq!(cells.len(), 8);
+
+        let command = CommandResult {
+            affected_rows: u64::MAX,
+            last_insert_id: Some(0),
+            warnings: 2,
+        };
+        assert_eq!(command.affected_rows, u64::MAX);
+        assert_eq!(command.last_insert_id, Some(0));
+        assert_eq!(command.warnings, 2);
+    }
 
     #[test]
     fn host_bindings_expose_the_additive_net_policy_modes() {
