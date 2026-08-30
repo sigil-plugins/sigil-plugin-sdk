@@ -202,11 +202,22 @@ pub mod test_host {
 
 #[cfg(test)]
 mod tests {
+    use super::host::sigil::host::net_policy::{Error as NetError, TlsMode, get_tls_mode};
     use super::sql::{
         Cell, ConnectOptions, Connection as _, Driver as _, ErrorClass, MockDriver, QueryResult,
         checked_accumulate,
     };
     use super::test_host::{LogLevel, TestHost};
+
+    #[test]
+    fn host_bindings_expose_the_additive_net_policy_modes() {
+        let get_mode: fn(&str) -> Result<TlsMode, NetError> = get_tls_mode;
+        let modes = [TlsMode::Disabled, TlsMode::Direct, TlsMode::Upgrade];
+        let _ = get_mode;
+        assert!(matches!(modes[0], TlsMode::Disabled));
+        assert!(matches!(modes[1], TlsMode::Direct));
+        assert!(matches!(modes[2], TlsMode::Upgrade));
+    }
 
     #[test]
     fn test_host_is_closed_and_deterministic() {
