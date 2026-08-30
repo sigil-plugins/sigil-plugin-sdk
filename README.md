@@ -24,11 +24,22 @@ authority.
 - `wit/sigil-sql/0.2.0/` is the nominally distinct typed SQL 0.2 contract.
 - SQL consumers pin an immutable SDK revision and must not maintain divergent copies.
 - `src/` provides reference Rust models and a deterministic authority-free test host.
-- `conformance/` contains language-neutral boundary and error-mapping vectors.
+- `conformance/` contains language-neutral boundary and error-mapping vectors,
+  executable Lua projection goldens, and the exact SQL 0.2 LuaLS stub golden.
+- [`docs/sql-compatibility.md`](docs/sql-compatibility.md) records the nominal
+  0.1/0.2 migration matrix and the checks that prevent interface substitution.
 
 Run `just check` without a Sigil checkout. Host maintainers additionally run
 `just drift /path/to/sigil` before publishing a host API change. The SDK is not
 a plugin and deliberately does not carry the `sigil-plugin` GitHub topic.
+
+Run `just sigil-check /path/to/sigil-binary` to validate, inspect, deterministically
+pack, and revalidate both authority-free SQL fixture components with an exact
+Sigil binary. Local fixture packages are deliberately not installed or placed
+in a project lock: Sigil correctly prohibits `local:path` evidence from
+authorizing a project. The separate nominal components, manifest entrypoints,
+reflection output, and LuaLS golden prove the compatibility boundary without
+weakening that provenance rule.
 
 ## Release synchronization
 

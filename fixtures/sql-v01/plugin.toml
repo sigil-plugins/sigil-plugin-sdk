@@ -1,0 +1,16 @@
+schema_version = 1
+name = "sql-v01"
+version = "0.0.1"
+description = "authority-free frozen SQL 0.1 conformance fixture"
+license = "MIT"
+
+[component]
+file = "plugin.wasm"
+entrypoint = "sigil:sql/driver@0.1.0"
+
+[requires]
+sigil = ">=0.33.0, <1.0.0"
+host_api = "^1.0"
+
+[repository]
+source = "github:sigil-plugins/sigil-plugin-sdk"

@@ -1,0 +1,5 @@
+package sigil:sql-conformance-v02@0.0.0;
+
+world fixture {
+    export sigil:sql/driver@0.2.0;
+}

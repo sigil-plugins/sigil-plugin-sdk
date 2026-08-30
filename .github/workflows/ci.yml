@@ -17,8 +17,10 @@ jobs:
         with:
           toolchain: 1.95.0
           components: clippy,rustfmt
+          targets: wasm32-unknown-unknown
       - uses: taiki-e/install-action@v2
         with:
           tool: wasm-tools@1.252.0
       - run: cargo install b3sum --version 1.8.2 --locked
-      - run: ./scripts/check-contracts.sh
+      - run: just check
+      - run: just reproducible
