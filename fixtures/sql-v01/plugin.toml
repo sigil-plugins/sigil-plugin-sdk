@@ -13,4 +13,4 @@ sigil = ">=0.33.0, <1.0.0"
 host_api = "^1.0"
 
 [repository]
-source = "github:sigil-plugins/sigil-plugin-sdk"
+source = "github:conformance/sql-fixtures"

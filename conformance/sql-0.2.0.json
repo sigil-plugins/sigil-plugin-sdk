@@ -52,14 +52,65 @@
     { "class": "unsupported", "terminal": false }
   ],
   "invalid_vectors": [
-    { "id": "unknown-cell-discriminant", "expected": "protocol" },
-    { "id": "invalid-utf8-string", "expected": "encoding" },
-    { "id": "row-width-mismatch", "expected": "protocol" },
-    { "id": "temporal-metadata-missing", "expected": "protocol" },
-    { "id": "temporal-metadata-on-nontemporal", "expected": "protocol" },
-    { "id": "max-rows-plus-one", "expected": "limit", "partial_result": false },
-    { "id": "max-result-bytes-plus-one", "expected": "limit", "partial_result": false },
-    { "id": "logical-byte-overflow", "expected": "limit", "partial_result": false }
+    {
+      "id": "unknown-cell-discriminant",
+      "layer": "canonical-abi",
+      "representable_as_sql_error": false,
+      "expected": "component-rejection",
+      "executable": "sigil:malformed_value_exports_fail_deterministically"
+    },
+    {
+      "id": "invalid-utf8-string",
+      "layer": "canonical-abi",
+      "representable_as_sql_error": false,
+      "expected": "component-rejection",
+      "executable": "sigil:malformed_canonical_strings_fail_in_wasmtime_before_lossy_conversion"
+    },
+    {
+      "id": "row-width-mismatch",
+      "layer": "driver-validation",
+      "representable_as_sql_error": true,
+      "expected": "protocol",
+      "executable": "sdk:invalid_driver_vectors_execute_against_reference_validation"
+    },
+    {
+      "id": "temporal-metadata-missing",
+      "layer": "driver-validation",
+      "representable_as_sql_error": true,
+      "expected": "protocol",
+      "executable": "sdk:invalid_driver_vectors_execute_against_reference_validation"
+    },
+    {
+      "id": "temporal-metadata-on-nontemporal",
+      "layer": "driver-validation",
+      "representable_as_sql_error": true,
+      "expected": "protocol",
+      "executable": "sdk:invalid_driver_vectors_execute_against_reference_validation"
+    },
+    {
+      "id": "max-rows-plus-one",
+      "layer": "driver-and-component-host",
+      "representable_as_sql_error": true,
+      "expected": "limit",
+      "partial_result": false,
+      "executable": "sigil-scenario-and-host:element_depth_and_allocation_limits_accept_exact_boundary_then_fail_plus_one"
+    },
+    {
+      "id": "max-result-bytes-plus-one",
+      "layer": "driver-and-component-host",
+      "representable_as_sql_error": true,
+      "expected": "limit",
+      "partial_result": false,
+      "executable": "sigil-scenario-and-host:element_depth_and_allocation_limits_accept_exact_boundary_then_fail_plus_one"
+    },
+    {
+      "id": "logical-byte-overflow",
+      "layer": "reference-accounting",
+      "representable_as_sql_error": true,
+      "expected": "limit",
+      "partial_result": false,
+      "executable": "sdk:invalid_driver_vectors_execute_against_reference_validation"
+    }
   ],
   "limit_vectors": [
     { "id": "caller-zero-rows", "driver": 10000, "operator": 5000, "caller": 0, "effective": 0 },
@@ -91,7 +142,7 @@
     { "version": "0.2.0", "entrypoint": "sigil:sql/driver@0.2.0", "typed_cells": true, "exec": true }
   ],
   "goldens": {
-    "lua_shapes": "conformance/sql-0.2.0.lua",
+    "sigil_scenario": "conformance/sql-compatibility.sigil.lua",
     "lua_stub": "conformance/sql-0.2.0.stub.lua"
   }
 }

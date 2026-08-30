@@ -73,6 +73,8 @@ impl GuestConnection for FixtureConnection {
         }
         let rows = match sql.as_str() {
             "SELECT typed" => typed_rows(),
+            "SELECT empty" => empty_rows(),
+            "SELECT three" => three_rows(),
             "SELECT value FROM conformance" => temporary_rows(&self.state.borrow().temporary),
             "COMMAND" => {
                 return Err(failure(
@@ -98,6 +100,20 @@ impl GuestConnection for FixtureConnection {
                     "fixture transport failure",
                 ));
             }
+            "ERROR protocol" => {
+                return Err(terminal(
+                    self,
+                    ErrorClass::Protocol,
+                    "fixture protocol failure",
+                ));
+            }
+            "ERROR encoding" => {
+                return Err(terminal(
+                    self,
+                    ErrorClass::Encoding,
+                    "fixture encoding failure",
+                ));
+            }
             _ => {
                 return Err(failure(
                     ErrorClass::Unsupported,
@@ -114,6 +130,11 @@ impl GuestConnection for FixtureConnection {
             return Err(failure(ErrorClass::Closed, "connection is closed"));
         }
         let command = match sql.as_str() {
+            "COMMAND max" => CommandResult {
+                affected_rows: u64::MAX,
+                last_insert_id: Some(u64::MAX),
+                warnings: u32::MAX,
+            },
             "CREATE TEMPORARY TABLE conformance(value BIGINT)" => {
                 self.state.borrow_mut().temporary.clear();
                 CommandResult {
@@ -219,6 +240,27 @@ fn typed_rows() -> RowSet {
                 SqlCell::Temporal("2026-08-30 12:34:56.000001+05:45".to_owned()),
             ],
         }],
+    }
+}
+
+#[inline(never)]
+fn empty_rows() -> RowSet {
+    RowSet {
+        columns: Vec::new(),
+        rows: Vec::new(),
+    }
+}
+
+#[inline(never)]
+fn three_rows() -> RowSet {
+    RowSet {
+        columns: vec![column("value", 8, ColumnType::Signed, None)],
+        rows: [1, 2, 3]
+            .into_iter()
+            .map(|value| Row {
+                cells: vec![SqlCell::Signed(value)],
+            })
+            .collect(),
     }
 }
 
@@ -354,6 +396,25 @@ mod tests {
         )
         .expect("same-session temporary row");
         assert!(matches!(temporary.rows[0].cells[0], SqlCell::Signed(7)));
+
+        let maximum =
+            <FixtureConnection as GuestConnection>::exec(&connection, "COMMAND max".to_owned())
+                .expect("maximum command metadata");
+        assert_eq!(maximum.affected_rows, u64::MAX);
+        assert_eq!(maximum.last_insert_id, Some(u64::MAX));
+        assert_eq!(maximum.warnings, u32::MAX);
+
+        let empty =
+            <FixtureConnection as GuestConnection>::query(&connection, "SELECT empty".to_owned())
+                .expect("empty row set");
+        assert!(empty.columns.is_empty());
+        assert!(empty.rows.is_empty());
+
+        let three =
+            <FixtureConnection as GuestConnection>::query(&connection, "SELECT three".to_owned())
+                .expect("three rows");
+        assert_eq!(three.rows.len(), 3);
+        assert_eq!(logical_row_set_bytes(&three), Some(48));
     }
 
     #[test]
@@ -380,16 +441,16 @@ mod tests {
         assert_eq!(server.vendor_code, Some(1201));
         assert_eq!(server.sqlstate.as_deref(), Some("HY000"));
 
-        let limited = connection(Some(0), None);
+        let limited = connection(Some(2), None);
         assert!(matches!(
-            <FixtureConnection as GuestConnection>::query(&limited, "SELECT typed".to_owned()),
+            <FixtureConnection as GuestConnection>::query(&limited, "SELECT three".to_owned()),
             Err(Error {
                 class: ErrorClass::Limit,
                 ..
             })
         ));
         assert!(matches!(
-            <FixtureConnection as GuestConnection>::query(&limited, "SELECT typed".to_owned()),
+            <FixtureConnection as GuestConnection>::query(&limited, "SELECT three".to_owned()),
             Err(Error {
                 class: ErrorClass::Closed,
                 ..
@@ -397,15 +458,10 @@ mod tests {
         ));
 
         let command_limited = connection(None, Some(19));
-        <FixtureConnection as GuestConnection>::exec(
-            &command_limited,
-            "CREATE TEMPORARY TABLE conformance(value BIGINT)".to_owned(),
-        )
-        .expect("twelve-byte command");
         assert!(matches!(
             <FixtureConnection as GuestConnection>::exec(
                 &command_limited,
-                "INSERT INTO conformance VALUES (7)".to_owned()
+                "COMMAND max".to_owned()
             ),
             Err(Error {
                 class: ErrorClass::Limit,
@@ -415,8 +471,10 @@ mod tests {
     }
 
     #[test]
-    fn timeout_and_transport_remain_distinct_terminal_classes() {
+    fn terminal_classes_remain_distinct_and_close_the_session() {
         for (statement, class) in [
+            ("ERROR encoding", ErrorClass::Encoding),
+            ("ERROR protocol", ErrorClass::Protocol),
             ("ERROR timeout", ErrorClass::Timeout),
             ("ERROR transport", ErrorClass::Transport),
         ] {

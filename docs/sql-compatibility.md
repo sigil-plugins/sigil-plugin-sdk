@@ -22,8 +22,10 @@ The conformance kit pins this distinction four ways:
    nominally incompatible.
 3. The fixture components build and validate against separate byte-matched WIT
    dependencies.
-4. The checked Lua stub names only the 0.2 resource methods; a 0.1 stub cannot
-   acquire `exec` without changing its reflected component interface.
+4. `scripts/check-sigil-compatibility.sh` seeds separate remote-style store
+   identities, creates one exact project lock, compares the generated 0.2 stub
+   to its golden, proves the 0.1 stub lacks `exec`, and requires both modules in
+   one real Sigil scenario.
 
 The fixture packages are test inputs, not releases. They grant no host imports,
 open no network connection, read no secret, and must never be published as SQL

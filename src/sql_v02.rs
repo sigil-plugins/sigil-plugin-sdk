@@ -664,6 +664,101 @@ mod tests {
     }
 
     #[test]
+    fn invalid_driver_vectors_execute_against_reference_validation() {
+        use std::collections::BTreeSet;
+
+        let mut executed = BTreeSet::new();
+        let temporal = RowSet {
+            columns: vec![column(
+                "created_at",
+                ColumnType::Temporal,
+                Some(TemporalType::Timestamp),
+            )],
+            rows: vec![Row {
+                cells: vec![Cell::Temporal("2026-08-30 12:34:56".to_owned())],
+            }],
+        };
+
+        let mut wrong_width = temporal.clone();
+        wrong_width.rows[0].cells.clear();
+        assert_eq!(
+            logical_row_set_bytes(&wrong_width),
+            Err(ErrorClass::Protocol)
+        );
+        executed.insert("row-width-mismatch");
+
+        let mut missing_temporal = temporal;
+        missing_temporal.columns[0].temporal_type = None;
+        assert_eq!(
+            logical_row_set_bytes(&missing_temporal),
+            Err(ErrorClass::Protocol)
+        );
+        executed.insert("temporal-metadata-missing");
+
+        let mut extra_temporal = one_signed(7);
+        extra_temporal.columns[0].temporal_type = Some(TemporalType::Vendor);
+        assert_eq!(
+            logical_row_set_bytes(&extra_temporal),
+            Err(ErrorClass::Protocol)
+        );
+        executed.insert("temporal-metadata-on-nontemporal");
+
+        let three_rows = RowSet {
+            columns: one_signed(0).columns,
+            rows: [1, 2, 3]
+                .into_iter()
+                .map(|value| Row {
+                    cells: vec![Cell::Signed(value)],
+                })
+                .collect(),
+        };
+        assert_eq!(
+            admit_row_set(
+                three_rows,
+                ResultLimits {
+                    max_rows: Some(2),
+                    max_result_bytes: None,
+                },
+            )
+            .expect_err("maximum plus one row must fail without output")
+            .class,
+            ErrorClass::Limit
+        );
+        executed.insert("max-rows-plus-one");
+
+        let one_row = one_signed(7);
+        let exact_bytes = logical_row_set_bytes(&one_row).expect("logical bytes");
+        assert_eq!(
+            admit_row_set(
+                one_row,
+                ResultLimits {
+                    max_rows: None,
+                    max_result_bytes: Some(exact_bytes - 1),
+                },
+            )
+            .expect_err("maximum plus one byte must fail without output")
+            .class,
+            ErrorClass::Limit
+        );
+        executed.insert("max-result-bytes-plus-one");
+
+        assert_eq!(checked_add(u64::MAX, 1), Err(ErrorClass::Limit));
+        executed.insert("logical-byte-overflow");
+
+        let corpus: serde_json::Value =
+            serde_json::from_str(include_str!("../conformance/sql-0.2.0.json"))
+                .expect("checked SQL 0.2 conformance JSON");
+        let declared = corpus["invalid_vectors"]
+            .as_array()
+            .expect("invalid vectors")
+            .iter()
+            .filter(|vector| vector["representable_as_sql_error"] == true)
+            .map(|vector| vector["id"].as_str().expect("invalid vector id"))
+            .collect::<BTreeSet<_>>();
+        assert_eq!(executed, declared);
+    }
+
+    #[test]
     fn caller_limits_only_lower_driver_and_operator_ceilings() {
         let driver = ResultLimits {
             max_rows: Some(10_000),

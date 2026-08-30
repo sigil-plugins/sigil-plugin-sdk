@@ -296,7 +296,7 @@ mod tests {
     }
 
     #[test]
-    fn sql_v02_language_neutral_and_lua_goldens_are_executable() {
+    fn sql_v02_language_neutral_vectors_and_sigils_scenario_are_checked() {
         let corpus: serde_json::Value =
             serde_json::from_str(include_str!("../conformance/sql-0.2.0.json"))
                 .expect("checked SQL 0.2 conformance JSON");
@@ -329,6 +329,15 @@ mod tests {
                 .filter(|vector| vector["expected"] == "limit")
                 .all(|vector| vector["partial_result"] == false)
         );
+        assert!(
+            corpus["invalid_vectors"]
+                .as_array()
+                .expect("invalid vectors")
+                .iter()
+                .all(|vector| vector["layer"].is_string()
+                    && vector["representable_as_sql_error"].is_boolean()
+                    && vector["executable"].is_string())
+        );
         assert_eq!(
             corpus["command_vectors"][1]["affected_rows_decimal"],
             u64::MAX.to_string()
@@ -343,30 +352,13 @@ mod tests {
         );
 
         let lua = mlua::Lua::new();
-        let fixture: mlua::Table = lua
-            .load(include_str!("../conformance/sql-0.2.0.lua"))
-            .set_name("sql-0.2.0.lua")
+        let scenario: mlua::Table = lua
+            .load(include_str!("../conformance/sql-compatibility.sigil.lua"))
+            .set_name("sql-compatibility.sigil.lua")
             .eval()
-            .expect("Lua projection golden executes");
-        assert_eq!(
-            fixture.get::<String>("interface").expect("interface"),
-            "sigil:sql/driver@0.2.0"
-        );
-        let cells = fixture.get::<mlua::Table>("cells").expect("cell shapes");
-        let null = cells.get::<mlua::Table>(1).expect("tagged null");
-        assert_eq!(null.get::<String>("tag").expect("null tag"), "null");
-        assert!(matches!(
-            null.get::<mlua::Value>("value"),
-            Ok(mlua::Value::Nil)
-        ));
-        let bytes = cells.get::<mlua::Table>(8).expect("binary cell");
-        assert_eq!(
-            bytes
-                .get::<mlua::String>("value")
-                .expect("binary byte string")
-                .as_bytes(),
-            &[0, 255, 128]
-        );
+            .expect("Sigil compatibility scenario compiles and returns metadata");
+        assert!(scenario.get::<mlua::Function>("run").is_ok());
+        assert_eq!(scenario.get::<String>("priority").expect("priority"), "P0");
         let stub: mlua::Table = lua
             .load(include_str!("../conformance/sql-0.2.0.stub.lua"))
             .set_name("sql-0.2.0.stub.lua")
