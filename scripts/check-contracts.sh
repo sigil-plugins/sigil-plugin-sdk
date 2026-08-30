@@ -2,6 +2,7 @@
 set -euo pipefail
 
 wasm-tools component wit wit/sigil-host/1.0.0/host.wit >/dev/null
+wasm-tools component wit wit/sigil-host/1.1.0/host.wit >/dev/null
 wasm-tools component wit wit/sigil-sql/0.1.0/sql.wit >/dev/null
 wasm-tools component wit wit/sigil-sql/0.2.0/sql.wit >/dev/null
 

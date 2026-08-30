@@ -14,6 +14,17 @@ pub mod host {
     });
 }
 
+/// Generated guest bindings for the opaque `sigil:host/sigv4@1.1.0`
+/// exchange. Host API 1.0 remains a separate nominal package.
+#[allow(unsafe_code, clippy::all, clippy::nursery, clippy::pedantic)]
+pub mod host_v11 {
+    wit_bindgen::generate!({
+        path: "wit/sigil-host/1.1.0",
+        world: "imports",
+        generate_all,
+    });
+}
+
 /// Generated guest bindings for `sigil:sql/driver@0.2.0`.
 ///
 /// This module is a compile-time proof that the canonical WIT generates Rust
