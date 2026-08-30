@@ -22,5 +22,5 @@ jobs:
         with:
           tool: wasm-tools@1.252.0
       - run: cargo install b3sum --version 1.8.2 --locked
-      - run: just check
-      - run: just reproducible
+      - run: ./scripts/check-contracts.sh
+      - run: ./scripts/check-sql-reproducible.sh
