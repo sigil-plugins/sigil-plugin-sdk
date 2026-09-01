@@ -25,6 +25,18 @@ pub mod host_v11 {
     });
 }
 
+/// Generated guest bindings for the opaque `sigil:host/sigv4@1.2.0`
+/// exchange. The WIT shape is unchanged; the nominal line selects additive,
+/// bounded opaque-query authorization in Sigil.
+#[allow(unsafe_code, clippy::all, clippy::nursery, clippy::pedantic)]
+pub mod host_v12 {
+    wit_bindgen::generate!({
+        path: "wit/sigil-host/1.2.0",
+        world: "imports",
+        generate_all,
+    });
+}
+
 /// Generated guest bindings for `sigil:sql/driver@0.2.0`.
 ///
 /// This module is a compile-time proof that the canonical WIT generates Rust

@@ -4,6 +4,7 @@ Canonical WIT contracts for Sigil Component Model plugins.
 
 - `wit/sigil-host/1.0.0/host.wit` is the byte-for-byte public copy of Sigil's private Host API 1.0 contract, including the additive `sigil:host/net-policy@1.0.0` interface.
 - `wit/sigil-host/1.1.0/host.wit` adds only the opaque, read-only `sigil:host/sigv4@1.1.0` signed-exchange authority; it does not change or replace Host API 1.0.
+- `wit/sigil-host/1.2.0/host.wit` keeps the signed-exchange wire shape but selects the additive host policy that can authorize one optional, nonempty opaque canonical-query value with an operator-set encoded-byte bound. Host API 1.1 remains frozen.
 - `wit/sigil-sql/0.1.0/sql.wit` remains the frozen canonical source of the experimental `sigil:sql/driver@0.1.0` export interface.
 - `wit/sigil-sql/0.2.0/sql.wit` is the additive typed query/command contract. See [`docs/sql-0.2.0.md`](docs/sql-0.2.0.md) for exact value, bound, and migration semantics.
 
@@ -20,6 +21,7 @@ authority.
 
 - `wit/sigil-host/1.0.0/` is the public byte-matched host contract.
 - `wit/sigil-host/1.1.0/` is the nominally distinct opaque SigV4 exchange contract.
+- `wit/sigil-host/1.2.0/` is the nominally distinct bounded opaque-query SigV4 contract used for caller-driven pagination.
 - `wit/sigil-sql/0.1.0/` is the frozen SQL 0.1 contract.
 - `wit/sigil-sql/0.2.0/` is the nominally distinct typed SQL 0.2 contract.
 - SQL consumers pin an immutable SDK revision and must not maintain divergent copies.
