@@ -37,6 +37,18 @@ pub mod host_v12 {
     });
 }
 
+/// Generated guest bindings for `sigil:host/grpc-unary@1.3.0`.
+/// Routing, credentials and request policy remain host-owned; these bindings
+/// grant no raw network or secret access. Earlier host packages remain frozen.
+#[allow(unsafe_code, clippy::all, clippy::nursery, clippy::pedantic)]
+pub mod host_v13 {
+    wit_bindgen::generate!({
+        path: "wit/sigil-host/1.3.0",
+        world: "imports",
+        generate_all,
+    });
+}
+
 /// Generated guest bindings for `sigil:sql/driver@0.2.0`.
 ///
 /// This module is a compile-time proof that the canonical WIT generates Rust
@@ -246,6 +258,76 @@ mod tests {
         checked_accumulate,
     };
     use super::test_host::{LogLevel, TestHost};
+
+    #[test]
+    fn host_v13_bindings_expose_semantic_unary_exchange_shapes() {
+        use super::host_v13::sigil::host::grpc_unary::{
+            Call, ErrorKind, Failure, Metadata, Response, SendState, exchange,
+        };
+
+        // Type-check the import without invoking a host or gaining authority.
+        let exchange_fn: fn(&Call) -> Result<Response, Failure> = exchange;
+        let _ = exchange_fn;
+        let call = Call {
+            profile: "reviewed-profile".to_owned(),
+            rpc: "reviewed-rpc".to_owned(),
+            message: vec![0, 255],
+            timeout_millis: 1_000,
+            max_response_bytes: 4_096,
+        };
+        assert_eq!(call.message, [0, 255]);
+        assert_eq!(call.timeout_millis, 1_000);
+        assert_eq!(call.max_response_bytes, 4_096);
+
+        let response = Response {
+            status: 0,
+            sent: SendState::MessageSent,
+            message: Some(vec![0, 255]),
+            grpc_message: Some("bounded status".to_owned()),
+            status_details_bin: Some(vec![128, 0]),
+            initial_metadata: vec![Metadata {
+                name: "reviewed-metadata".to_owned(),
+                value: vec![0, 255],
+            }],
+            trailing_metadata: Vec::new(),
+        };
+        assert_eq!(response.message.as_deref(), Some([0, 255].as_slice()));
+        assert_eq!(response.grpc_message.as_deref(), Some("bounded status"));
+        assert_eq!(
+            response.status_details_bin.as_deref(),
+            Some([128, 0].as_slice())
+        );
+        assert_eq!(response.initial_metadata[0].value, [0, 255]);
+        assert!(response.trailing_metadata.is_empty());
+
+        let states = [
+            SendState::NotSent,
+            SendState::HeadersSent,
+            SendState::MessagePartial,
+            SendState::MessageSent,
+        ];
+        assert_eq!(states.len(), 4);
+        let kinds = [
+            ErrorKind::Denied,
+            ErrorKind::InvalidRequest,
+            ErrorKind::Unavailable,
+            ErrorKind::Timeout,
+            ErrorKind::Tls,
+            ErrorKind::Protocol,
+            ErrorKind::Io,
+            ErrorKind::Limit,
+            ErrorKind::CredentialDenied,
+            ErrorKind::Cancelled,
+            ErrorKind::Internal,
+        ];
+        assert_eq!(kinds.len(), 11);
+        let failure = Failure {
+            kind: ErrorKind::Denied,
+            sent: SendState::NotSent,
+        };
+        assert!(matches!(failure.kind, ErrorKind::Denied));
+        assert!(matches!(failure.sent, SendState::NotSent));
+    }
 
     #[test]
     fn generated_sql_v02_bindings_expose_typed_query_and_command_shapes() {

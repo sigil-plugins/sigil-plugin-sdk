@@ -20,3 +20,8 @@ cmp --silent \
   "$1/wit/sigil-host/1.2.0/host.wit" \
   "wit/sigil-host/1.2.0/host.wit"
 echo "sigil:host@1.2.0 WIT is byte-identical"
+
+cmp --silent \
+  "$1/wit/sigil-host/1.3.0/host.wit" \
+  "wit/sigil-host/1.3.0/host.wit"
+echo "sigil:host@1.3.0 WIT is byte-identical"
